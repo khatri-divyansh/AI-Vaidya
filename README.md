@@ -1,16 +1,98 @@
-# React + Vite
+# AI Vaidya 🪷
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**An Intelligent Q&A Assistant for Ayurveda Knowledge**  
+*BMS Institute of Technology & Management — AI Fusion Hackathon, Problem Statement 2*
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Overview
 
-## React Compiler
+AI Vaidya is a domain-specific Retrieval-Augmented Generation (RAG) system that lets users upload any Ayurvedic PDF or text and ask questions in natural English. Every answer is grounded **exclusively** in the uploaded knowledge base — no hallucinations, no internet.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Features
 
-## Expanding the ESLint configuration
+- 📄 **PDF Upload** — Client-side text extraction using pdf.js (no server needed)
+- ✍️ **Text Paste** — Directly paste Ayurvedic text into the knowledge base
+- 🔍 **Semantic Q&A** — Context-window RAG via Claude API
+- 📜 **Source Citations** — Every answer shows the reference passage from your text
+- 🎤 **Voice Input** — Ask questions by speaking (Web Speech API)
+- 🏠 **Multi-page App** — Home, Chat, and About pages with React Router
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Tech Stack
+
+| Layer | Technology |
+|---|---|
+| Frontend | React 18 + Vite |
+| Routing | React Router v6 |
+| AI Model | Claude Sonnet 4 (Anthropic API) |
+| PDF Parsing | pdf.js 3.x (CDN, client-side) |
+| Voice Input | Web Speech API |
+| Styling | Custom CSS (parchment/Ayurveda aesthetic) |
+
+## Setup & Run
+
+```bash
+# 1. Clone the repository
+git clone <your-repo-url>
+cd ai-vaidya
+
+# 2. Install dependencies
+npm install
+
+# 3. Start the development server
+npm run dev
+
+# 4. Open http://localhost:5173
+```
+
+> **Note:** The Anthropic API key is handled by the claude.ai artifact environment.  
+> For standalone deployment, add your key to a `.env` file:
+> ```
+> VITE_ANTHROPIC_API_KEY=sk-ant-...
+> ```
+> Then update `src/hooks/useChat.js` to use `import.meta.env.VITE_ANTHROPIC_API_KEY`.
+
+## How to Use
+
+1. Go to `/chat`
+2. Upload an Ayurvedic PDF (e.g., from National Institute of Ayurveda) or click **Load Sample Text**
+3. Ask a question like:
+   - *"What are the three doshas?"*
+   - *"How does turmeric help in wound healing?"*
+   - *"What is Panchakarma?"*
+4. The AI answers only from your uploaded text, with a source reference shown below each answer.
+
+## Project Structure
+
+```
+src/
+  components/
+    ChatHistory.jsx       # Message list with auto-scroll
+    ChatMessage.jsx       # Individual message bubble
+    ChatWindow.jsx        # Chat area container
+    FileUpload.jsx        # PDF drag-and-drop + extraction
+    Footer.jsx
+    InputBox.jsx          # Text input + voice + send
+    Loader.jsx            # Animated thinking indicator
+    Navbar.jsx
+    PDFPreview.jsx        # Shows extracted PDF snippet
+    Sidebar.jsx           # Knowledge base panel
+    SourceCard.jsx        # Reference passage display
+    SuggestedQuestions.jsx
+    VoiceInput.jsx        # Web Speech API integration
+  context/
+    ChatContext.jsx       # Global state
+  hooks/
+    useChat.js            # Anthropic API call + RAG prompt
+  pages/
+    Home.jsx
+    ChatPage.jsx
+    About.jsx
+  App.jsx
+  main.jsx
+  index.css
+```
+
+## License
+
+MIT License — open source, free to use and modify.
