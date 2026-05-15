@@ -30,25 +30,23 @@ export function useChat() {
       setIsLoading(true);
 
       try {
-        const response = await fetch("https://api.anthropic.com/v1/messages", {
+        const response = await fetch("http://localhost:5000/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            model: "claude-sonnet-4-20250514",
-            max_tokens: 1000,
-            system: SYSTEM_PROMPT(effectiveKnowledge),
-            messages: [{ role: "user", content: question }],
+            message: question,
+            knowledge: effectiveKnowledge,
           }),
         });
 
         const data = await response.json();
 
-        if (data.error) {
-          addMessage("assistant", `⚠️ API Error: ${data.error.message}`, null);
+        if (!response.ok) {
+          addMessage("assistant", `⚠️ API Error: ${data.error}`, null);
           return;
         }
 
-        const fullText = data.content?.map((b) => b.text || "").join("") || "";
+        const fullText = data.response || "";
         const sourceMatch = fullText.match(/SOURCE:([\s\S]+)$/i);
         const mainAnswer = sourceMatch
           ? fullText.substring(0, fullText.indexOf(sourceMatch[0])).trim()
