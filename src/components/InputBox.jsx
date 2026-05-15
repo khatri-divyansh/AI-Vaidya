@@ -56,7 +56,7 @@ export default function InputBox() {
         </button>
       </div>
       <p className="input-hint">
-        Answers are grounded in your uploaded knowledge base only · Enter to send
+        Answers are grounded in our built-in Ayurvedic database · Enter to send
       </p>
     </div>
   );

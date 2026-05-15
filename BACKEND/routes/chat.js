@@ -10,16 +10,17 @@ const SYSTEM_PROMPT = (knowledge) => `You are AI Vaidya, a deeply knowledgeable 
 Rules:
 1. Answer clearly and concisely in 3–5 sentences.
 2. After your answer, add a line that begins with "SOURCE:" followed by the most relevant passage (≤70 words) from the text that supports your answer.
-3. If the topic is not covered in the text, respond: "The provided Ayurvedic texts do not contain information about this topic. Please upload more comprehensive texts."
+3. If the topic is not covered in the text, respond: "The provided Ayurvedic texts do not contain information about this topic."
 
 AYURVEDIC KNOWLEDGE BASE:
-${knowledge.substring(0, 7000)}`;
+${knowledge}`;
 
 router.post("/chat", async (req, res) => {
-  const { message, knowledge } = req.body;
-  
-  if (!message || !knowledge) {
-    return res.status(400).json({ error: "Missing message or knowledge in request" });
+  const { message } = req.body;
+  const knowledge = req.app.locals.combinedKnowledge || "";
+
+  if (!message) {
+    return res.status(400).json({ error: "Missing message in request" });
   }
 
   if (!process.env.OPENROUTER_API_KEY) {
