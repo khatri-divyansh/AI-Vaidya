@@ -1,76 +1,114 @@
-import { useState, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export default function VoiceInput({ onTranscript, onListening }) {
   const [listening, setListening] = useState(false);
+  const [supported, setSupported] = useState(true);
   const recognitionRef = useRef(null);
 
-  const setListeningState = (val) => {
-    setListening(val);
-    if (onListening) onListening(val);
-  };
+  const onTranscriptRef = useRef(onTranscript);
+  const onListeningRef = useRef(onListening);
+  useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
+  useEffect(() => { onListeningRef.current = onListening; }, [onListening]);
 
-  const supported =
-    typeof window !== "undefined" &&
-    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
-
-  const toggle = () => {
-    if (!supported) {
-      alert("Voice input is not supported in this browser. Try Chrome.");
-      return;
-    }
-
-    if (listening) {
-      recognitionRef.current?.stop();
-      setListeningState(false);
-      return;
-    }
-
+  useEffect(() => {
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    const recognition = new SR();
-    recognition.lang = "en-US"; // Changed from en-IN for better global compatibility
-    recognition.interimResults = true;
-    recognition.continuous = true;
+    if (!SR) {
+      setSupported(false);
+      return;
+    }
 
-    recognition.onstart = () => console.log("🎤 Voice recognition started");
-    recognition.onspeechstart = () => console.log("🗣️ Speech detected...");
-    
-    recognition.onresult = (e) => {
-      console.log("📝 Result received:", e.results.length);
-      let finalTranscript = "";
-      let interimTranscript = "";
+    const r = new SR();
+    r.continuous = true;
+    r.interimResults = true;
+    r.lang = "en-IN";
 
-      for (let i = e.resultIndex; i < e.results.length; ++i) {
-        if (e.results[i].isFinal) {
-          finalTranscript += e.results[i][0].transcript;
+    r.onresult = (event) => {
+      let interim = "";
+      let final = "";
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const t = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          final += t;
         } else {
-          interimTranscript += e.results[i][0].transcript;
+          interim += t;
         }
       }
 
-      onTranscript(finalTranscript || interimTranscript, !!finalTranscript);
+      if (final) onTranscriptRef.current(final, true);
+      if (interim) onTranscriptRef.current(interim, false);
     };
 
-    recognition.onend = () => {
-      console.log("🎤 Voice recognition ended");
-      setListeningState(false);
+    r.onerror = (event) => {
+      if (event.error === "no-speech") {
+        try {
+          r.stop();
+          r.start();
+        } catch (err) {
+          console.warn("restart error:", err);
+        }
+        return;
+      }
+
+      console.error("SpeechRecognition error:", event.error);
+      setListening(false);
+      onListeningRef.current?.(false);
     };
 
-    recognition.onerror = (event) => {
-      console.error("❌ Voice recognition error:", event.error);
-      setListeningState(false);
+    r.onend = () => {
+      setListening(false);
+      onListeningRef.current?.(false);
     };
 
-    recognition.start();
-    recognitionRef.current = recognition;
-    setListeningState(true);
+    recognitionRef.current = r;
+
+    return () => {
+      recognitionRef.current?.abort();
+    };
+  }, []);
+
+  const toggle = () => {
+    const r = recognitionRef.current;
+    if (!r) return;
+
+    if (listening) {
+      r.stop();
+      setListening(false);
+      onListeningRef.current?.(false);
+    } else {
+      try {
+        r.start();
+        setListening(true);
+        onListeningRef.current?.(true);
+      } catch (err) {
+        console.warn("start() error:", err);
+      }
+    }
   };
+
+  if (!supported) {
+    return (
+      <button disabled title="Voice not supported — use Chrome or Edge">
+        🎤
+      </button>
+    );
+  }
 
   return (
     <button
-      className={`voice-btn ${listening ? "listening" : ""}`}
       onClick={toggle}
-      title={listening ? "Stop listening" : "Voice input"}
-      type="button"
+      title={listening ? "Stop listening" : "Speak your question"}
+      style={{
+        background: listening ? "#e53e3e" : "transparent",
+        color: listening ? "#fff" : "inherit",
+        border: "1px solid currentColor",
+        borderRadius: "50%",
+        width: 36,
+        height: 36,
+        cursor: "pointer",
+        fontSize: 16,
+        transition: "all 0.2s",
+      }}
     >
       {listening ? "⏹" : "🎤"}
     </button>
