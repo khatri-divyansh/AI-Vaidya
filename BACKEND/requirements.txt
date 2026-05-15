@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+pymupdf
+sentence-transformers
+faiss-cpu
+anthropic
+python-dotenv
+numpy
+# pickle5 is not reliably installable on Python 3.13; if you need it, use Python 3.12 or lower
+# pickle5
