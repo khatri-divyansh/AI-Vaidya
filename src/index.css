@@ -313,7 +313,29 @@ button { font-family: inherit; cursor: pointer; }
   border-radius: 14px;
   line-height: 1.7;
   font-size: 0.95rem;
+  position: relative;
+  display: flex;
+  flex-direction: column;
 }
+
+.speak-btn {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0.3;
+  transition: opacity 0.2s, transform 0.2s;
+  margin-top: 4px;
+}
+
+.user .speak-btn { color: #fff; opacity: 0.6; }
+.speak-btn:hover {
+  opacity: 1;
+  transform: scale(1.2);
+}
+
 .chat-message.user .msg-bubble {
   background: var(--saffron);
   color: #fff;

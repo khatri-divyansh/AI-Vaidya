@@ -1,114 +1,86 @@
-import { useEffect, useRef, useState } from "react";
+import { useState, useRef } from "react";
 
 export default function VoiceInput({ onTranscript, onListening }) {
   const [listening, setListening] = useState(false);
-  const [supported, setSupported] = useState(true);
   const recognitionRef = useRef(null);
 
-  const onTranscriptRef = useRef(onTranscript);
-  const onListeningRef = useRef(onListening);
-  useEffect(() => { onTranscriptRef.current = onTranscript; }, [onTranscript]);
-  useEffect(() => { onListeningRef.current = onListening; }, [onListening]);
+  const supported = typeof window !== "undefined" && 
+    ("SpeechRecognition" in window || "webkitSpeechRecognition" in window);
 
-  useEffect(() => {
-    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-    if (!SR) {
-      setSupported(false);
+  const toggle = () => {
+    if (!supported) return;
+
+    if (listening) {
+      recognitionRef.current?.stop();
+      setListening(false);
+      onListening?.(false);
       return;
     }
 
-    const r = new SR();
-    r.continuous = true;
-    r.interimResults = true;
-    r.lang = "en-IN";
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    const recognition = new SR();
 
-    r.onresult = (event) => {
+    // Configuration
+    recognition.lang = "en-US";
+    recognition.interimResults = true;
+    recognition.continuous = true;
+
+    recognition.onstart = () => {
+      console.log("🎤 Mic active");
+      setListening(true);
+      onListening?.(true);
+    };
+
+    recognition.onresult = (event) => {
       let interim = "";
       let final = "";
 
       for (let i = event.resultIndex; i < event.results.length; i++) {
-        const t = event.results[i][0].transcript;
+        const transcript = event.results[i][0].transcript;
         if (event.results[i].isFinal) {
-          final += t;
+          final += transcript;
         } else {
-          interim += t;
+          interim += transcript;
         }
       }
-
-      if (final) onTranscriptRef.current(final, true);
-      if (interim) onTranscriptRef.current(interim, false);
+      onTranscript(final || interim, !!final);
     };
 
-    r.onerror = (event) => {
+    recognition.onerror = (event) => {
+      console.error("Voice Error:", event.error);
       if (event.error === "no-speech") {
-        try {
-          r.stop();
-          r.start();
-        } catch (err) {
-          console.warn("restart error:", err);
-        }
-        return;
+        alert("Microphone heard no sound. Please check your mic connection or speak louder.");
+      } else if (event.error === "not-allowed") {
+        alert("Microphone permission denied. Please enable it in browser settings.");
       }
-
-      console.error("SpeechRecognition error:", event.error);
-      setListening(false);
-      onListeningRef.current?.(false);
+      stop();
     };
 
-    r.onend = () => {
+    recognition.onend = () => {
       setListening(false);
-      onListeningRef.current?.(false);
+      onListening?.(false);
     };
 
-    recognitionRef.current = r;
-
-    return () => {
-      recognitionRef.current?.abort();
-    };
-  }, []);
-
-  const toggle = () => {
-    const r = recognitionRef.current;
-    if (!r) return;
-
-    if (listening) {
-      r.stop();
+    const stop = () => {
+      recognition.stop();
       setListening(false);
-      onListeningRef.current?.(false);
-    } else {
-      try {
-        r.start();
-        setListening(true);
-        onListeningRef.current?.(true);
-      } catch (err) {
-        console.warn("start() error:", err);
-      }
+      onListening?.(false);
+    };
+
+    try {
+      recognition.start();
+      recognitionRef.current = recognition;
+    } catch (err) {
+      console.error("Start failed:", err);
     }
   };
 
-  if (!supported) {
-    return (
-      <button disabled title="Voice not supported — use Chrome or Edge">
-        🎤
-      </button>
-    );
-  }
-
   return (
     <button
+      className={`voice-btn ${listening ? "listening" : ""}`}
       onClick={toggle}
       title={listening ? "Stop listening" : "Speak your question"}
-      style={{
-        background: listening ? "#e53e3e" : "transparent",
-        color: listening ? "#fff" : "inherit",
-        border: "1px solid currentColor",
-        borderRadius: "50%",
-        width: 36,
-        height: 36,
-        cursor: "pointer",
-        fontSize: 16,
-        transition: "all 0.2s",
-      }}
+      type="button"
     >
       {listening ? "⏹" : "🎤"}
     </button>
