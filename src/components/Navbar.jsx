@@ -18,9 +18,6 @@ export default function Navbar() {
       <div className="nav-actions">
         <a href="/" className="nav-link">Home</a>
         <a href="/about" className="nav-link">About</a>
-        <button className="nav-btn-clear" onClick={clearChat}>
-          Clear Chat
-        </button>
       </div>
     </nav>
   );

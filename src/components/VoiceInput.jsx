@@ -1,8 +1,13 @@
 import { useState, useRef } from "react";
 
-export default function VoiceInput({ onTranscript }) {
+export default function VoiceInput({ onTranscript, onListening }) {
   const [listening, setListening] = useState(false);
   const recognitionRef = useRef(null);
+
+  const setListeningState = (val) => {
+    setListening(val);
+    if (onListening) onListening(val);
+  };
 
   const supported =
     typeof window !== "undefined" &&
@@ -16,26 +21,48 @@ export default function VoiceInput({ onTranscript }) {
 
     if (listening) {
       recognitionRef.current?.stop();
-      setListening(false);
+      setListeningState(false);
       return;
     }
 
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
     const recognition = new SR();
-    recognition.lang = "en-IN";
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+    recognition.lang = "en-US"; // Changed from en-IN for better global compatibility
+    recognition.interimResults = true;
+    recognition.continuous = true;
 
+    recognition.onstart = () => console.log("🎤 Voice recognition started");
+    recognition.onspeechstart = () => console.log("🗣️ Speech detected...");
+    
     recognition.onresult = (e) => {
-      const transcript = e.results[0][0].transcript;
-      onTranscript(transcript);
+      console.log("📝 Result received:", e.results.length);
+      let finalTranscript = "";
+      let interimTranscript = "";
+
+      for (let i = e.resultIndex; i < e.results.length; ++i) {
+        if (e.results[i].isFinal) {
+          finalTranscript += e.results[i][0].transcript;
+        } else {
+          interimTranscript += e.results[i][0].transcript;
+        }
+      }
+
+      onTranscript(finalTranscript || interimTranscript, !!finalTranscript);
     };
-    recognition.onend = () => setListening(false);
-    recognition.onerror = () => setListening(false);
+
+    recognition.onend = () => {
+      console.log("🎤 Voice recognition ended");
+      setListeningState(false);
+    };
+
+    recognition.onerror = (event) => {
+      console.error("❌ Voice recognition error:", event.error);
+      setListeningState(false);
+    };
 
     recognition.start();
     recognitionRef.current = recognition;
-    setListening(true);
+    setListeningState(true);
   };
 
   return (

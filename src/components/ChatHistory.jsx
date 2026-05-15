@@ -15,13 +15,23 @@ export default function ChatHistory() {
   if (messages.length === 0) {
     return (
       <div className="chat-welcome">
-        <div className="welcome-card">
-          <span className="welcome-lotus">🪷</span>
-          <h2 className="welcome-title">Namaste. I am your AI Vaidya.</h2>
-          <p className="welcome-desc">
-            Upload an Ayurvedic PDF or paste text in the sidebar, then ask me
-            anything. I will answer only from your provided knowledge base.
-          </p>
+        <div className="welcome-card fundamentals-view">
+          <span className="welcome-lotus">🕉️</span>
+          <h2 className="welcome-title">Fundamentals of Ayurveda</h2>
+          <div className="fundamentals-content">
+            <p>
+              AI Vaidya is grounded in the timeless wisdom of Ayurvedic medicine. 
+              Our knowledge base covers the core principles including:
+            </p>
+            <div className="fundamentals-grid">
+              <div className="fund-item"><strong>The Three Doshas:</strong> Vata, Pitta, and Kapha</div>
+              <div className="fund-item"><strong>The Three Gunas:</strong> Sattva, Rajas, and Tamas</div>
+              <div className="fund-item"><strong>Agni:</strong> The essential digestive fire</div>
+              <div className="fund-item"><strong>Herbal Wisdom:</strong> Turmeric, Tulsi, Ashwagandha, and more</div>
+              <div className="fund-item"><strong>Panchakarma:</strong> Traditional therapeutic procedures</div>
+            </div>
+            <p className="start-hint">Ask your first question below to begin your consultation.</p>
+          </div>
           <SuggestedQuestions />
         </div>
       </div>

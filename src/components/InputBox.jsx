@@ -5,16 +5,29 @@ import VoiceInput from "./VoiceInput";
 
 export default function InputBox() {
   const [value, setValue] = useState("");
+  const [interimValue, setInterimValue] = useState("");
+  const [isListening, setIsListening] = useState(false);
   const { sendMessage } = useChat();
   const { isLoading } = useChatContext();
   const textareaRef = useRef();
 
   const handleSend = () => {
-    if (!value.trim() || isLoading) return;
-    sendMessage(value.trim());
+    const finalValue = (value + " " + interimValue).trim();
+    if (!finalValue || isLoading) return;
+    sendMessage(finalValue);
     setValue("");
+    setInterimValue("");
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
+    }
+  };
+
+  const handleVoiceTranscript = (text, isFinal) => {
+    if (isFinal) {
+      setValue((v) => (v.trim() + " " + text).trim());
+      setInterimValue("");
+    } else {
+      setInterimValue(text);
     }
   };
 
@@ -27,17 +40,24 @@ export default function InputBox() {
 
   const handleInput = (e) => {
     setValue(e.target.value);
+    setInterimValue("");
     e.target.style.height = "auto";
     e.target.style.height = Math.min(e.target.scrollHeight, 140) + "px";
   };
 
   return (
     <div className="input-box-area">
+      {isListening && (
+        <div className="voice-status">
+          <span className="pulse-dot"></span>
+          {interimValue ? `"${interimValue}..."` : "Listening..."}
+        </div>
+      )}
       <div className="input-row">
         <textarea
           ref={textareaRef}
           className="question-input"
-          value={value}
+          value={interimValue ? (value.trim() + " " + interimValue).trim() : value}
           onInput={handleInput}
           onChange={(e) => setValue(e.target.value)}
           onKeyDown={handleKey}
@@ -45,7 +65,10 @@ export default function InputBox() {
           rows={1}
           disabled={isLoading}
         />
-        <VoiceInput onTranscript={(t) => setValue((v) => v + t)} />
+        <VoiceInput 
+          onTranscript={handleVoiceTranscript} 
+          onListening={setIsListening}
+        />
         <button
           className="send-btn"
           onClick={handleSend}

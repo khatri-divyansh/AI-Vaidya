@@ -33,8 +33,8 @@ router.post("/chat", async (req, res) => {
     const genAI = new GoogleGenerativeAI(process.env.OPENROUTER_API_KEY);
     const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
-    // Retrieve relevant context
-    const relevantKnowledge = getRelevantChunks(message, chunks);
+    // Retrieve relevant context using Vector Search
+    const relevantKnowledge = await getRelevantChunks(message, chunks, genAI);
 
     const prompt = `${SYSTEM_PROMPT(relevantKnowledge)}\n\nUSER QUESTION: ${message}`;
 
