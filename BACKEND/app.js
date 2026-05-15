@@ -4,6 +4,7 @@ import dotenv from "dotenv";
 import chatRoutes from "./routes/chat.js";
 import { loadPDFsFromFolder } from "./utils/loadPDFs.js";
 import { AYURVEDIC_KNOWLEDGE_BASE } from "./data/knowledge.js";
+import { splitIntoChunks } from "./utils/retriever.js";
 
 dotenv.config();
 
@@ -19,12 +20,15 @@ async function startServer() {
   console.log("🌿 AI Vaidya starting up...");
 
   const pdfText = await loadPDFsFromFolder();
-  app.locals.combinedKnowledge = AYURVEDIC_KNOWLEDGE_BASE + pdfText;
+  const fullText = AYURVEDIC_KNOWLEDGE_BASE + pdfText;
+  
+  // Pre-chunk the knowledge for fast searching
+  app.locals.knowledgeChunks = splitIntoChunks(fullText);
 
   const pdfNote = pdfText
     ? `\n📖 PDF content added: ${pdfText.length.toLocaleString()} extra characters`
     : "\n📖 No PDFs loaded. Using built-in knowledge base only.";
-  console.log(`✅ Knowledge base ready: ${app.locals.combinedKnowledge.length.toLocaleString()} total characters${pdfNote}`);
+  console.log(`✅ Knowledge base ready: ${app.locals.knowledgeChunks.length} chunks created.${pdfNote}`);
 
   // Routes
   app.use("/api", chatRoutes);
@@ -33,7 +37,7 @@ async function startServer() {
   app.get("/health", (req, res) => {
     res.json({
       status: "Server is running",
-      knowledgeChars: app.locals.combinedKnowledge.length,
+      chunks: app.locals.knowledgeChunks.length,
     });
   });
 

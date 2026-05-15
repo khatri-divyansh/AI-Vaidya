@@ -1,19 +1,13 @@
+import { useNavigate } from "react-router-dom";
 import { useChatContext } from "../context/ChatContext";
 
 export default function Navbar() {
-  const { clearChat, sidebarOpen, setSidebarOpen } = useChatContext();
+  const { clearChat } = useChatContext();
+  const navigate = useNavigate();
 
   return (
     <nav className="navbar">
-      <button
-        className="sidebar-toggle"
-        onClick={() => setSidebarOpen((o) => !o)}
-        title="Toggle sidebar"
-      >
-        <span className="toggle-icon">{sidebarOpen ? "◀" : "▶"}</span>
-      </button>
-
-      <div className="nav-brand">
+      <div className="nav-brand" onClick={() => navigate("/")} style={{ cursor: "pointer" }}>
         <span className="nav-om">ॐ</span>
         <div className="nav-titles">
           <h1 className="nav-title">AI Vaidya</h1>

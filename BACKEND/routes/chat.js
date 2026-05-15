@@ -1,5 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
+import { GoogleGenerativeAI } from "@google/generative-ai";
+import { getRelevantChunks } from "../utils/retriever.js";
 
 dotenv.config();
 
@@ -17,54 +19,33 @@ ${knowledge}`;
 
 router.post("/chat", async (req, res) => {
   const { message } = req.body;
-  const knowledge = req.app.locals.combinedKnowledge || "";
-
+  const chunks = req.app.locals.knowledgeChunks || [];
+  
   if (!message) {
     return res.status(400).json({ error: "Missing message in request" });
   }
 
   if (!process.env.OPENROUTER_API_KEY) {
-    return res.status(500).json({ error: "OpenRouter API key not configured" });
+    return res.status(500).json({ error: "Gemini API key not configured" });
   }
 
   try {
-    const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${process.env.OPENROUTER_API_KEY}`,
-        "Content-Type": "application/json",
-        "HTTP-Referer": "http://localhost:5173",
-        "X-Title": "AI Vaidya"
-      },
-      body: JSON.stringify({
-        model: "nvidia/nemotron-3-super-120b-a12b:free",
-        messages: [
-          {
-            role: "system",
-            content: SYSTEM_PROMPT(knowledge)
-          },
-          {
-            role: "user",
-            content: message
-          }
-        ],
-        max_tokens: 1000
-      })
-    });
+    const genAI = new GoogleGenerativeAI(process.env.OPENROUTER_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
 
-    const data = await response.json();
+    // Retrieve relevant context
+    const relevantKnowledge = getRelevantChunks(message, chunks);
 
-    if (!response.ok) {
-      console.error("OpenRouter API Error:", data);
-      return res.status(response.status).json({ error: data.error?.message || "OpenRouter API error" });
-    }
+    const prompt = `${SYSTEM_PROMPT(relevantKnowledge)}\n\nUSER QUESTION: ${message}`;
 
-    const fullText = data.choices[0]?.message?.content || "";
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const fullText = response.text();
     
     res.json({ response: fullText });
   } catch (err) {
-    console.error("Server Error:", err);
-    res.status(500).json({ error: err.message || "Failed to get response from OpenRouter" });
+    console.error("Gemini API Error:", err);
+    res.status(500).json({ error: err.message || "Failed to get response from Gemini" });
   }
 });
 
